@@ -1,14 +1,19 @@
 (defvar g-compile-repository-dir "")
 (defvar g-compile-projects '())
+(defvar g-compile-precommand nil)
 
 (defun g-compile-gen-ninja (&optional all v)
-  (format "ninja %s -C %s"
+  (format (concat (if (and (stringp g-compile-precommand)
+                           (not (string-equal "" g-compile-precommand)))
+                      (format "%s && " g-compile-precommand)
+                    "")
+                  "ninja %s -C %s")
           (if all "" (mapconcat 'identity g-compile-projects " "))
           (format "out/%s" (if v v "Debug"))))
 
 (defun g-compile-ninja (&optional all v)
   (interactive)
-  (compile (format "cd %s &&  %s"
+  (compile (format "cd %s && %s"
                    g-compile-repository-dir
                    (g-compile-gen-ninja all v))))
 
@@ -32,8 +37,8 @@
               (g-compile-projects-prompt)
             (if projects projects "")))
          (proj (split-string input " " t)))
-    (message "-> %s" proj)
-    (setq g-compile-projects (append proj g-compile-projects))))
+    (setq g-compile-projects (append proj g-compile-projects))
+    (message "projects: %s" (mapconcat 'identity g-compile-projects " "))))
 
 (defun g-compile-reset-projects (&optional projects)
   (interactive)
@@ -46,21 +51,9 @@
      (--reset)
      projects)))
 
+(defun g-compile-set-precommand (&optional cmd)
+  (interactive (list (read-string "Command: " g-compile-precommand)))
+  (setq g-compile-precommand cmd)
+  (message "precommand: %s" g-compile-precommand))
+
 (provide 'g-compile)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
